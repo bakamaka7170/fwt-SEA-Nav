@@ -25,14 +25,14 @@ conda activate sea_nav
 cd isaacgym/python && pip install -e .
 ```
 
-### 3. Install rsl_rl (PPO implementation)
+### 3. Install rsl_rl
+- Clone this repository
+- Install the package:
 ```bash
 cd training/rsl_rl && pip install -e .
 ```
 
 ### 4. Install legged_gym
-- Clone this repository
-- Install the package:
 ```bash
 cd training/legged_gym && pip install -e .
 ```
