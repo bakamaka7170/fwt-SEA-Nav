@@ -51,7 +51,7 @@ def play(args):
     # overwrite some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 1)
     
-    env_cfg.terrain.terrain_types = ['easy_room']  
+    env_cfg.terrain.terrain_types = ['middle_room']  
     env_cfg.terrain.terrain_proportions = [1.0]
     env_cfg.asset.file = '{LEGGED_GYM_ROOT_DIR}/resources/go2_description/urdf/go2_description.urdf'
     env_cfg.replay.enable_collision_replay = False
@@ -105,7 +105,16 @@ def play(args):
 
     RECORD_VIDEO = False
     SAVE_IMAGES = False
-    TOTAL_EPISODES = 10
+    TOTAL_EPISODES = 100
+    stats = {
+        "success": 0,
+        "fail": 0,
+        "timeout": 0,
+        "stuck": 0,
+        "fall_down": 0,
+        "collision": 0,
+        "terminal_contact": 0,
+    }
     video = None
     current_frame = 0
     max_frames = 20000
@@ -123,10 +132,35 @@ def play(args):
 
             if dones.any():
                 episode_count += 1
-                print(f"============== Episode {episode_count} Finished ============== ")
+                episode_info = infos.get("episode", {})
+                success = float(episode_info.get("success", 0.0)) > 0.5
+                if success:
+                    stats["success"] += 1
+                else:
+                    stats["fail"] += 1
+                for key in ("timeout", "stuck", "fall_down", "collision", "terminal_contact"):
+                    if float(episode_info.get(key, 0.0)) > 0.5:
+                        stats[key] += 1
+                print(
+                    f"============== Episode {episode_count} Finished | "
+                    f"success={success} | "
+                    f"success_rate={stats['success'] / episode_count:.2%} ============== "
+                )
 
             if episode_count == TOTAL_EPISODES:
                 print(f"Reached {TOTAL_EPISODES} episodes, stopping.")
+                print(
+                    "Hard room evaluation summary:\n"
+                    f"  episodes: {episode_count}\n"
+                    f"  success: {stats['success']}\n"
+                    f"  fail: {stats['fail']}\n"
+                    f"  success_rate: {stats['success'] / max(episode_count, 1):.2%}\n"
+                    f"  timeout: {stats['timeout']}\n"
+                    f"  stuck: {stats['stuck']}\n"
+                    f"  fall_down: {stats['fall_down']}\n"
+                    f"  collision: {stats['collision']}\n"
+                    f"  terminal_contact: {stats['terminal_contact']}"
+                )
                 if video is not None:
                     video.release()  
                 break           

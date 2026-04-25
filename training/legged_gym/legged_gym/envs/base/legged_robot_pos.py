@@ -179,7 +179,7 @@ class LeggedRobotPos(LeggedRobot):
         return torch.clip(torques, -self.torque_limits, self.torque_limits)
 
     def _compute_actions(self, nav_actions=None):
-        self.slr_commands = nav_actions
+        self.slr_commands = nav_actions 
         
         scale_lin_vel = self.cfg.loco.normalization.obs_scales.lin_vel
         scale_ang_vel = self.cfg.loco.normalization.obs_scales.ang_vel
@@ -381,6 +381,16 @@ class LeggedRobotPos(LeggedRobot):
             self._reset_root_states(normal_ids)
             self.is_replay[normal_ids] = False
 
+        zero_flags = torch.zeros_like(self.reset_buf, dtype=torch.bool)
+        terminate_buf = getattr(self, "terminate_buf", zero_flags)
+        fall_down = getattr(self, "fall_down", zero_flags)
+        episode_success = torch.mean(self.goal_reached_flag[env_ids].float())
+        episode_timeout = torch.mean(self.time_out_buf[env_ids].float())
+        episode_stuck = torch.mean(self.stand_still_flag[env_ids].float())
+        episode_fall_down = torch.mean(fall_down[env_ids].float())
+        episode_collision = torch.mean(self.collision_occurred[env_ids].float())
+        episode_terminal_contact = torch.mean(terminate_buf[env_ids].float())
+
         # Common Reset Logic (Buffers)
         # We do this for ALL envs
         self.last_actions[env_ids] = 0.
@@ -417,6 +427,12 @@ class LeggedRobotPos(LeggedRobot):
         if self.cfg.terrain.curriculum:
             self.extras["episode"]["terrain_level"] = torch.mean(self.terrain_levels.float())
             self.extras["episode"]["goal_level"] = torch.mean(self.goal_levels.float())
+        self.extras["episode"]["success"] = episode_success
+        self.extras["episode"]["timeout"] = episode_timeout
+        self.extras["episode"]["stuck"] = episode_stuck
+        self.extras["episode"]["fall_down"] = episode_fall_down
+        self.extras["episode"]["collision"] = episode_collision
+        self.extras["episode"]["terminal_contact"] = episode_terminal_contact
         if self.cfg.env.send_timeouts:
             self.extras["time_outs"] = self.time_out_buf
         
