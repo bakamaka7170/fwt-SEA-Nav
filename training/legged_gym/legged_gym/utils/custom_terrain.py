@@ -1,9 +1,44 @@
 import numpy as np
 
+# def is_path_with_obstacle(room, robot_pos, goal_pos):
+#     """Check if there is any obstacle between the robot and the goal."""
+#     x1, y1 = robot_pos
+#     x2, y2 = goal_pos
+    
+#     # Compute line step increments
+#     dx = abs(x2 - x1)
+#     dy = abs(y2 - y1)
+#     sx = 1 if x1 < x2 else -1
+#     sy = 1 if y1 < y2 else -1
+    
+#     if dx > dy:
+#         err = dx / 2.0
+#         while x1 != x2:
+#             if room[x1, y1] > 0:  # Obstacle check
+#                 return True
+#             err -= dy
+#             if err < 0:
+#                 y1 += sy
+#                 err += dx
+#             x1 += sx
+#     else:
+#         err = dy / 2.0
+#         while y1 != y2:
+#             if room[x1, y1] > 0:  # Obstacle check
+#                 return True
+#             err -= dx
+#             if err < 0:
+#                 x1 += sx
+#                 err += dy
+#             y1 += sy
+    
+#     return False  # No obstacles
+
 def is_path_with_obstacle(room, robot_pos, goal_pos):
     """Check if there is any obstacle between the robot and the goal."""
-    x1, y1 = robot_pos
-    x2, y2 = goal_pos
+    # [修改核心] 安全解包坐标
+    x1, y1 = int(robot_pos[0]), int(robot_pos[1])
+    x2, y2 = int(goal_pos[0]), int(goal_pos[1])
     
     # Compute line step increments
     dx = abs(x2 - x1)
@@ -34,12 +69,32 @@ def is_path_with_obstacle(room, robot_pos, goal_pos):
     
     return False  # No obstacles
 
+# def is_far_from_obstacles(room, pos, min_distance):
+#     """Check if the position is at least min_distance away from obstacles."""
+#     y_start = max(0, pos[0] - min_distance)
+#     y_end = min(room.shape[0], pos[0] + min_distance + 1)
+#     x_start = max(0, pos[1] - min_distance)
+#     x_end = min(room.shape[1], pos[1] + min_distance + 1)
+    
+#     neighborhood = room[y_start:y_end, x_start:x_end]
+#     if neighborhood.size == 0:
+#         return False
+    
+#     # An obstacle is defined as a cell with height > 0.1m
+#     no_obst = (neighborhood <= 0.1).all()
+#     return no_obst
+
 def is_far_from_obstacles(room, pos, min_distance):
     """Check if the position is at least min_distance away from obstacles."""
-    y_start = max(0, pos[0] - min_distance)
-    y_end = min(room.shape[0], pos[0] + min_distance + 1)
-    x_start = max(0, pos[1] - min_distance)
-    x_end = min(room.shape[1], pos[1] + min_distance + 1)
+    # [修改核心] 强制将坐标和距离转为原生 Python 整数标量，消除 Tensor 或 Array 的影响
+    p_y = int(pos[0])
+    p_x = int(pos[1])
+    m_dist = int(min_distance)
+    
+    y_start = max(0, p_y - m_dist)
+    y_end = min(room.shape[0], p_y + m_dist + 1)
+    x_start = max(0, p_x - m_dist)
+    x_end = min(room.shape[1], p_x + m_dist + 1)
     
     neighborhood = room[y_start:y_end, x_start:x_end]
     if neighborhood.size == 0:
@@ -58,12 +113,26 @@ def scale_robot_and_goal(robot_pos=None, goal_pos=None, scale_factor=5):
     final_robot_pos = [final_robot_pos_x, final_robot_pos_y]
     return final_robot_pos, final_goal_pos
             
+# def place_robot_and_goal(room, min_distance=5, min_goal_distance=35):
+#     """Place robot and goal positions, ensuring valid and obstacle-free locations."""
+#     grid_size = room.shape[0]
+#     while True:
+#         robot_pos = [np.random.randint(1, grid_size - 1), np.random.randint(1, grid_size - 1)]
+#         goal_pos = [np.random.randint(1, grid_size - 1), np.random.randint(1, grid_size - 1)]
+#         if room[tuple(robot_pos)] == 0 and room[tuple(goal_pos)] == 0:
+#             if is_far_from_obstacles(room, robot_pos, min_distance) and is_far_from_obstacles(room, goal_pos, min_distance):
+#                 if np.linalg.norm(np.array(robot_pos) - np.array(goal_pos)) > min_goal_distance:
+#                     if is_path_with_obstacle(room, robot_pos, goal_pos):
+#                         return robot_pos, goal_pos
+
 def place_robot_and_goal(room, min_distance=5, min_goal_distance=35):
     """Place robot and goal positions, ensuring valid and obstacle-free locations."""
     grid_size = room.shape[0]
     while True:
-        robot_pos = [np.random.randint(1, grid_size - 1), np.random.randint(1, grid_size - 1)]
-        goal_pos = [np.random.randint(1, grid_size - 1), np.random.randint(1, grid_size - 1)]
+        # [修改核心] 加上 int() 强转，确保 robot_pos 和 goal_pos 内部是纯净的标量
+        robot_pos = [int(np.random.randint(1, grid_size - 1)), int(np.random.randint(1, grid_size - 1))]
+        goal_pos = [int(np.random.randint(1, grid_size - 1)), int(np.random.randint(1, grid_size - 1))]
+        
         if room[tuple(robot_pos)] == 0 and room[tuple(goal_pos)] == 0:
             if is_far_from_obstacles(room, robot_pos, min_distance) and is_far_from_obstacles(room, goal_pos, min_distance):
                 if np.linalg.norm(np.array(robot_pos) - np.array(goal_pos)) > min_goal_distance:

@@ -51,7 +51,7 @@ def play(args):
     # overwrite some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 1)
     
-    env_cfg.terrain.terrain_types = ['hard_room']  
+    env_cfg.terrain.terrain_types = ['easy_room']  
     env_cfg.terrain.terrain_proportions = [1.0]
     env_cfg.asset.file = '{LEGGED_GYM_ROOT_DIR}/resources/go2_description/urdf/go2_description.urdf'
     env_cfg.replay.enable_collision_replay = False

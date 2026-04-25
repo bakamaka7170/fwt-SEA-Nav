@@ -297,4 +297,4 @@ class Go2PosRoughCfgPPO( LeggedRobotCfgPPO ):
         policy_class_name = 'DifferentiableSafeActorCritic'
         # policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
-        max_iterations = 2000 # number of policy updates
+        max_iterations = 6000 # number of policy updates
